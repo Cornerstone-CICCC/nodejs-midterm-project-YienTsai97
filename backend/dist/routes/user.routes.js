@@ -8,7 +8,7 @@ const user_controller_1 = __importDefault(require("../controller/user.controller
 const middleware_1 = require("../middleware/middleware");
 const userRouter = (0, express_1.Router)();
 userRouter.get('/userprofile', user_controller_1.default.getUserProfile);
-userRouter.post('/login', user_controller_1.default.login);
+//userRouter.get('/login', userController.login)
 userRouter.get('/callback', user_controller_1.default.callback);
 userRouter.get('/profile', middleware_1.authenticateJWT, user_controller_1.default.profile);
 userRouter.get('/refresh_token', user_controller_1.default.refreshToken);

@@ -6,7 +6,7 @@ import { authenticateJWT } from "../middleware/middleware";
 const userRouter = Router()
 
 userRouter.get('/userprofile', userController.getUserProfile)
-userRouter.post('/login', userController.login)
+//userRouter.get('/login', userController.login)
 userRouter.get('/callback', userController.callback)
 userRouter.get('/profile', authenticateJWT, userController.profile)
 userRouter.get('/refresh_token', userController.refreshToken)
