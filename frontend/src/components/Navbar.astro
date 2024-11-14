@@ -1,0 +1,64 @@
+---
+
+---
+
+<nav>
+    <ul>
+        <li><a href="/">Home</a></li>
+        <li id="loginLink">
+            <a href="/login">Login</a>
+        </li>
+        <li id="profileLink">
+            <a href="/profile">Profile</a>
+        </li>
+        <li id="logoutButtonContainer">
+            <button id="logoutButton">Logout</button>
+        </li>
+    </ul>
+</nav>
+
+<style>
+    .hidden {
+        display: none;
+    }
+</style>
+
+<script>
+    const loginLink = document.querySelector("#loginLink") as HTMLUListElement;
+    const profileLink = document.querySelector(
+        "#profileLink",
+    ) as HTMLUListElement;
+    const logoutButton = document.querySelector(
+        "#logoutButton",
+    ) as HTMLButtonElement;
+
+    loginLink.addEventListener("click", async () => {
+        window.location.href = "/login";
+    });
+
+    profileLink.addEventListener("click", () => {
+        window.location.href = "/profile";
+    });
+
+    logoutButton.addEventListener("click", async (e) => {
+        e.preventDefault();
+        try {
+            const response = await fetch("http://localhost:3000/logout", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+            });
+
+            if (response.ok) {
+                alert("Logged out successfully");
+                window.location.href = "/login";
+            } else {
+                alert("Logout failed");
+            }
+        } catch (error) {
+            console.error("Error during login:", error);
+        }
+    });
+</script>
