@@ -6,54 +6,66 @@ dotenv.config()
 const { JWT_SECRET, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
 import crypto from 'crypto';
 import { authenticateJWT } from "../middleware/middleware";
-import userRouter from "../routes/user.routes";
 
-//Token 
+//Token
 const tokenUrl = 'https://accounts.spotify.com/api/token'
 
 //State key generater
-const generateRandomString = (length: number): string => {
-    return crypto.randomBytes(60).toString('hex').slice(0, length);
-};
+// const generateRandomString = (length: number): string => {
+//     return crypto.randomBytes(60).toString('hex').slice(0, length);
+// };
 
+const getState = async (req: Request<{}, {}, { storedState: string }>, res: Response): Promise<any> => {
+    try {
+        const { storedState } = req.body
+        req.session.storedState = storedState;
+        console.log(`getState storedState:${storedState}`)
+        res.status(201).json(storedState)
+    } catch (error) {
+        console.error(`error:"fail to get state"`)
+    }
+}
 
 const getUserProfile = (req: Request, res: Response): void => {
     const user = userModel.getProfile()
     res.json(user)
 }
 
-const login = (req: Request, res: Response): void => {
-    const storedState = generateRandomString(16);
-    req.session.state = storedState;
-    const scope = 'user-read-private user-read-email';
-    const authUrl = `https://accounts.spotify.com/authorize?` +
-        new URLSearchParams({
-            response_type: 'code',
-            client_id: process.env.CLIENT_ID || '',
-            redirect_uri: process.env.REDIRECT_URI || '',
-            scope: scope,
-            state: storedState,
-        }).toString();
-    res.redirect(authUrl);
-}
+// const login = (req: Request, res: Response): void => {
+//     const storedState = generateRandomString(16);
+//     req.session.state = storedState;
+//     const scope = 'user-read-private user-read-email';
+//     const authUrl = `https://accounts.spotify.com/authorize?` +
+//         new URLSearchParams({
+//             response_type: 'code',
+//             client_id: process.env.CLIENT_ID || '',
+//             redirect_uri: process.env.REDIRECT_URI || '',
+//             scope: scope,
+//             state: storedState,
+//         }).toString();
+//     res.redirect(authUrl);
+// }
 
 const callback = async (req: Request, res: Response): Promise<void> => {
     const code = req.query.code || undefined
     const state = req.query.state as string || undefined
-    const storedState = req.session.state as string || undefined
+    const { storedState } = req.session
+    console.log(`callback state:${state}`)
+    console.log(`callback storedState:${storedState}`)
 
 
     if (!code || !state) {
-        res.status(404).json({ message: "Missing code or state" });
+        console.error("Missing code or state (spotify)")
+        res.status(404).json({ message: "Missing code or state (spotify)", code, state, storedState });
         return;
     }
 
     if (state !== storedState) {
-        res.status(404).json({ message: 'error: state_mismatch', code, state, storedState });
-        res.redirect('/')
+        console.error("error: state_mismatch")
+        res.status(404).json({ message: 'error: state_mismatch', code, state, storedState: storedState });
         return;
     }
-    req.session.state = undefined;
+    req.session.storedState = undefined;
 
 
     const body = new URLSearchParams({
@@ -88,7 +100,7 @@ const callback = async (req: Request, res: Response): Promise<void> => {
         res.redirect('/profile');
     } catch (error) {
         console.error(error);
-        res.status(404).json({ message: 'User not found' }).redirect('/');
+        res.status(404).json({ message: 'User not found' });
     }
 }
 
@@ -149,13 +161,13 @@ const refreshToken = async (req: Request, res: Response) => {
 };
 
 const logout = (req: Request, res: Response): void => {
-    req.session = { isAuthenticated: false, state: undefined }
+    req.session = { isAuthenticated: false, storedState: undefined }
     res.redirect('/');
 }
 
 export default {
     getUserProfile,
-    login,
+    getState,
     callback,
     profile,
     refreshToken,

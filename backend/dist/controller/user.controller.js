@@ -17,45 +17,58 @@ const auth_1 = require("../middleware/auth");
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const { JWT_SECRET, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
-const crypto_1 = __importDefault(require("crypto"));
-//Token 
+//Token
 const tokenUrl = 'https://accounts.spotify.com/api/token';
 //State key generater
-const generateRandomString = (length) => {
-    return crypto_1.default.randomBytes(60).toString('hex').slice(0, length);
-};
+// const generateRandomString = (length: number): string => {
+//     return crypto.randomBytes(60).toString('hex').slice(0, length);
+// };
+const getState = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { storedState } = req.body;
+        req.session.storedState = storedState;
+        console.log(`getState storedState:${storedState}`);
+        res.status(201).json(storedState);
+    }
+    catch (error) {
+        console.error(`error:"fail to get state"`);
+    }
+});
 const getUserProfile = (req, res) => {
     const user = user_model_1.default.getProfile();
     res.json(user);
 };
-const login = (req, res) => {
-    const storedState = generateRandomString(16);
-    req.session.state = storedState;
-    const scope = 'user-read-private user-read-email';
-    const authUrl = `https://accounts.spotify.com/authorize?` +
-        new URLSearchParams({
-            response_type: 'code',
-            client_id: process.env.CLIENT_ID || '',
-            redirect_uri: process.env.REDIRECT_URI || '',
-            scope: scope,
-            state: storedState,
-        }).toString();
-    res.redirect(authUrl);
-};
+// const login = (req: Request, res: Response): void => {
+//     const storedState = generateRandomString(16);
+//     req.session.state = storedState;
+//     const scope = 'user-read-private user-read-email';
+//     const authUrl = `https://accounts.spotify.com/authorize?` +
+//         new URLSearchParams({
+//             response_type: 'code',
+//             client_id: process.env.CLIENT_ID || '',
+//             redirect_uri: process.env.REDIRECT_URI || '',
+//             scope: scope,
+//             state: storedState,
+//         }).toString();
+//     res.redirect(authUrl);
+// }
 const callback = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const code = req.query.code || undefined;
     const state = req.query.state || undefined;
-    const storedState = req.session.state || undefined;
+    const { storedState } = req.session;
+    console.log(`callback state:${state}`);
+    console.log(`callback storedState:${storedState}`);
     if (!code || !state) {
-        res.status(404).json({ message: "Missing code or state" });
+        console.error("Missing code or state (spotify)");
+        res.status(404).json({ message: "Missing code or state (spotify)", code, state, storedState });
         return;
     }
     if (state !== storedState) {
-        res.status(404).json({ message: 'error: state_mismatch', code, state, storedState });
-        res.redirect('/');
+        console.error("error: state_mismatch");
+        res.status(404).json({ message: 'error: state_mismatch', code, state, storedState: storedState });
         return;
     }
-    req.session.state = undefined;
+    req.session.storedState = undefined;
     const body = new URLSearchParams({
         code: code,
         redirect_uri: REDIRECT_URI || "",
@@ -83,7 +96,7 @@ const callback = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
     catch (error) {
         console.error(error);
-        res.status(404).json({ message: 'User not found' }).redirect('/');
+        res.status(404).json({ message: 'User not found' });
     }
 });
 const profile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -136,12 +149,12 @@ const refreshToken = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 const logout = (req, res) => {
-    req.session = { isAuthenticated: false, state: undefined };
+    req.session = { isAuthenticated: false, storedState: undefined };
     res.redirect('/');
 };
 exports.default = {
     getUserProfile,
-    login,
+    getState,
     callback,
     profile,
     refreshToken,

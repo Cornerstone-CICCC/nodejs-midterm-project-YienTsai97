@@ -15,6 +15,6 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
         return
     }
 
-    //req.locals.user = decoded as object;
+    //req.session.user = decoded as object;
     next();
 }

@@ -5,10 +5,8 @@ declare module 'express-serve-static-core' {
         session: {
             isAuthenticated: boolean,
             jwt?: string;
-            state: string | undefined;
+            storedState: string | undefined;
+            user?: UserProfile;
         }
-        locals: {
-            user: UserProfile;
-        };
     }
 }

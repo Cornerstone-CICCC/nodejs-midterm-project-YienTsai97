@@ -13,7 +13,7 @@ const authenticateJWT = (req, res, next) => {
         res.status(403).json({ message: 'Invalid token' });
         return;
     }
-    //req.locals.user = decoded as object;
+    //req.session.user = decoded as object;
     next();
 };
 exports.authenticateJWT = authenticateJWT;
