@@ -1,12 +1,11 @@
-import { UserProfile, Image } from "./user";
+import { User } from "./user";
 
 declare module 'express-serve-static-core' {
     interface Request {
         session: {
             isAuthenticated: boolean,
-            jwt?: string;
-            storedState: string | undefined;
-            user?: UserProfile;
+            jwt?: string,
+            userId: string,
         }
     }
 }

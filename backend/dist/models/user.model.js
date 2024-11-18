@@ -1,33 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const uuid_1 = require("uuid");
 class UserModel {
     constructor() {
-        this.user = {
-            country: 'string',
-            display_name: 'Jane Doe',
-            email: 'string',
-            explicit_content: {
-                filter_enabled: true,
-                filter_locked: false
-            },
-            external_urls: { spotify: 'string' },
-            followers: { href: 'string', total: 10 },
-            href: 'string',
-            id: 'string',
-            images: [
-                {
-                    url: 'https://images.unsplash.com/photo-1499557354967-2b2d8910bcca?q=80&w=1936&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-                    height: 10,
-                    width: 10,
-                }
-            ],
-            product: 'string',
-            type: 'string',
-            uri: 'string',
-        };
+        this.users = [];
     }
-    getProfile() {
-        return this.user;
+    findAll() {
+        return this.users;
+    }
+    findById(id) {
+        const user = this.users.find(user => user.id === id);
+        if (!user)
+            return undefined;
+        return user;
+    }
+    findByUsername(username) {
+        const user = this.users.find(user => user.username === username);
+        if (!user)
+            return undefined;
+        return user;
+    }
+    create(newData) {
+        const user = Object.assign({ id: (0, uuid_1.v4)() }, newData);
+        this.users.push(user);
+        return user;
+    }
+    edit(id, newData) {
+        const index = this.users.findIndex(user => user.id === id);
+        if (index === -1)
+            return undefined;
+        const updatedUser = Object.assign(Object.assign({}, this.users[index]), newData);
+        this.users[index] = updatedUser;
+        return updatedUser;
+    }
+    delete(id) {
+        const index = this.users.findIndex(user => user.id === id);
+        if (index === -1)
+            return false;
+        this.users.splice(index, 1);
+        return true;
     }
 }
 exports.default = new UserModel;

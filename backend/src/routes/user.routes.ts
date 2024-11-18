@@ -1,15 +1,11 @@
-import { Router, Request, Response } from "express";
-import userController from "../controller/user.controller";
-import { authenticateJWT } from "../middleware/middleware";
-
+import { Router, Request, Response } from 'express'
+import userController from '../controller/user.controller'
+import { checkAuth } from '../middleware/auth'
 
 const userRouter = Router()
 
-userRouter.get('/userprofile', userController.getUserProfile)
-userRouter.post('/state', userController.getState)
-userRouter.get('/callback', userController.callback)
-userRouter.get('/profile', authenticateJWT, userController.profile)
-userRouter.get('/refresh_token', userController.refreshToken)
-userRouter.get('/logout', userController.logout)
+userRouter.post('/register', userController.registerUser)
+userRouter.post('/login', userController.loginUser)
+userRouter.get('/logout', userController.logoutUser)
 
 export default userRouter

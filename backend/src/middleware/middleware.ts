@@ -1,20 +1,20 @@
-import { Request, Response, NextFunction } from "express";
-import { verifyToken } from './auth';
+import { User } from "../types/user";
+import jwt from "jsonwebtoken";
+import dotenv from 'dotenv'
+dotenv.config()
 
 
-export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
-    const token = req.session.jwt;
-    if (!token || !req.session.isAuthenticated) {
-        res.status(401).json({ message: 'Unauthorized' });
-        return
+const JWT_SECRET = process.env.JET_SECRET || "default_secret"
+
+
+export function generateToken(user: User): string {
+    return jwt.sign(user, JWT_SECRET, { expiresIn: '1h' });
+}
+
+export function verifyToken(token: string): User | null {
+    try {
+        return jwt.verify(token, JWT_SECRET) as User;
+    } catch (err) {
+        return null;
     }
-
-    const decoded = verifyToken(token);
-    if (!decoded) {
-        res.status(403).json({ message: 'Invalid token' });
-        return
-    }
-
-    //req.session.user = decoded as object;
-    next();
 }

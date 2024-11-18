@@ -1,0 +1,230 @@
+---
+import "../styles/global.css";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Home</title>
+  </head>
+  <body>
+    <div class="container title">
+      <h1>Welcome</h1>
+      <button id="logoutBtn">Log Out</button>
+    </div>
+
+    <div class="search-bar">
+      <form id="recipe-search">
+        <input
+          id="search-input"
+          type="text"
+          name="strMeal"
+          autocomplete="off"
+          placeholder="Search by name"
+        />
+        <button id="#searchBtn" type="submit">Search</button>
+      </form>
+    </div>
+  </body>
+
+  <div class="search-results">
+    <h2>Search Results</h2>
+    <ul id="search-results"></ul>
+  </div>
+
+  <div class="my-recipes">
+    <h2>My Favorite Recipes</h2>
+    <ul id="favorite-recipes"></ul>
+  </div>
+
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+
+  <script>
+    import type { Meal } from "../../../shared/meal";
+    const container = document.querySelector(".container") as HTMLDivElement;
+
+    //Logout
+
+    const logoutBtn = container.querySelector(
+      "#logoutBtn"
+    ) as HTMLButtonElement;
+    logoutBtn.addEventListener("click", async (e) => {
+      await fetch(`http://localhost:3000/users/logout`, {
+        credentials: "include",
+      });
+      window.location.href = "/";
+    });
+
+    //Search recipe Elements
+    const searchForm = document.querySelector(
+      "#recipe-search"
+    ) as HTMLFormElement;
+    const searchInput = document.querySelector(
+      "#search-input"
+    ) as HTMLInputElement;
+    const searchResults = document.querySelector(
+      "#search-results"
+    ) as HTMLUListElement;
+    const favoriteRecipes = document.querySelector(
+      "#favorite-recipes"
+    ) as HTMLUListElement;
+
+    // Submit to search
+    searchForm.addEventListener("submit", async (e): Promise<any> => {
+      e.preventDefault();
+      const input: string = searchInput.value.trim();
+      if (!input) return alert(`search cancelled`);
+
+      try {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/search.php?s=${input}`
+        );
+        if (!res.ok) return alert("Failed to fetch search results");
+        const data = await res.json();
+        console.log(`API response data:`, data);
+        if (!data.meals) {
+          return alert(`No meals found`);
+        }
+        displayResults(await data);
+      } catch (error) {
+        console.error(`Error to submit :${Error}`);
+        alert("An error occurred during search. Please try again later.");
+      }
+    });
+
+    //Feature
+
+    const displayResults = (data: any) => {
+      searchResults.innerHTML = "";
+      const meals: Meal[] = data.meals;
+      meals.forEach((meal: any) => {
+        const img = document.createElement("img");
+        img.src = meal.strMealThumb;
+        img.style.width = "200px";
+        img.style.height = "200px";
+        const title = document.createElement("h6");
+        title.textContent = meal.strMeal;
+        const category = document.createElement("p");
+        category.textContent = meal.strCategory;
+        const tag = document.createElement("p");
+        tag.textContent = meal.strTags ?? "";
+        const addButton = document.createElement("button");
+        addButton.textContent = "Add to Favorites";
+        addButton.addEventListener("click", () => addToFavorites(meal));
+
+        const li = document.createElement("li");
+        li.append(img);
+        li.append(title);
+        li.append(category);
+        li.append(tag);
+        li.appendChild(addButton);
+        searchResults.appendChild(li);
+      });
+    };
+
+    //Add to favorite >>> fetch favorite Recipe >>> Display favoritde Recipes (reload)
+    const addToFavorites = async (meal: Meal[]): Promise<any> => {
+      try {
+        const res = await fetch(`http://localhost:3000/recipes/add`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(meal),
+        });
+
+        if (res.ok) {
+          alert("Meal added to favorites!");
+          await fetchFavoriteRecipes();
+        } else {
+          console.error("Failed to add to favorites");
+        }
+      } catch (error) {
+        console.error("Error adding to favorites:", error);
+      }
+    };
+
+    const fetchFavoriteRecipes = async (): Promise<void> => {
+      try {
+        const res = await fetch(`http://localhost:3000/recipes`, {
+          credentials: "include",
+        });
+        const data: any = await res.json();
+        displayFavoriteRecipes(data);
+      } catch (error) {
+        console.error("Error fetching favorite recipes:", error);
+      }
+    };
+
+    const displayFavoriteRecipes = (recipes: Meal[]): void => {
+      favoriteRecipes.innerHTML = "";
+      recipes.forEach((recipe: Meal) => {
+        const img = document.createElement("img");
+        img.src = recipe.strMealThumb;
+        img.style.width = "200px";
+        img.style.height = "200px";
+        const title = document.createElement("h6");
+        title.textContent = recipe.strMeal;
+        const category = document.createElement("p");
+        category.textContent = recipe.strCategory;
+        const tag = document.createElement("p");
+        tag.textContent = recipe.strTags ?? "";
+        const delButton = document.createElement("button");
+        delButton.textContent = "Delete";
+        delButton.addEventListener("click", async () => {
+          deleteFromFavorite(recipe);
+        });
+        const videoBtn = document.createElement("button");
+        videoBtn.textContent = "video Tutorial";
+        videoBtn.addEventListener("click", () => {
+          window.open(`${recipe.strYoutube}`);
+        });
+
+        const li = document.createElement("li");
+        li.append(img);
+        li.append(title);
+        li.append(category);
+        li.append(tag);
+        li.append(videoBtn);
+        li.append(delButton);
+        favoriteRecipes.appendChild(li);
+      });
+    };
+
+    const deleteFromFavorite = async (meal: Meal) => {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/recipes/delete/${meal.idMeal}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          }
+        );
+
+        if (res.ok) {
+          alert("Meal delete from favorites!");
+          fetchFavoriteRecipes();
+        } else {
+          console.error("Failed to delete from favorites");
+        }
+      } catch (error) {
+        console.error("Error adding to favorites:", error);
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchFavoriteRecipes();
+    });
+  </script>
+</html>

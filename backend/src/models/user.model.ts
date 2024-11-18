@@ -1,33 +1,50 @@
-import { UserProfile } from "../types/user";
-
+import { User } from "../types/user";
+import { v4 as uuidv4 } from 'uuid'
 
 class UserModel {
-    private user: UserProfile = {
-        country: 'string',
-        display_name: 'Jane Doe',
-        email: 'string',
-        explicit_content: {
-            filter_enabled: true,
-            filter_locked: false
-        },
-        external_urls: { spotify: 'string' },
-        followers: { href: 'string', total: 10 },
-        href: 'string',
-        id: 'string',
-        images: [
-            {
-                url: 'https://images.unsplash.com/photo-1499557354967-2b2d8910bcca?q=80&w=1936&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-                height: 10,
-                width: 10,
-            }
-        ],
-        product: 'string',
-        type: 'string',
-        uri: 'string',
+    private users: User[] = []
+
+    findAll(): User[] {
+        return this.users
     }
 
-    getProfile(): UserProfile | undefined {
-        return this.user
+    findById(id: string): User | undefined {
+        const user = this.users.find(user => user.id === id)
+        if (!user) return undefined
+        return user
+    }
+
+    findByUsername(username: string): User | undefined {
+        const user = this.users.find(user => user.username === username)
+        if (!user) return undefined
+        return user
+    }
+
+    create(newData: Omit<User, 'id'>): User {
+        const user = {
+            id: uuidv4(),
+            ...newData
+        }
+        this.users.push(user)
+        return user
+    }
+
+    edit(id: string, newData: Partial<User>): User | undefined {
+        const index = this.users.findIndex(user => user.id === id)
+        if (index === -1) return undefined
+        const updatedUser = {
+            ...this.users[index],
+            ...newData
+        }
+        this.users[index] = updatedUser
+        return updatedUser
+    }
+
+    delete(id: string): boolean {
+        const index = this.users.findIndex(user => user.id === id)
+        if (index === -1) return false
+        this.users.splice(index, 1)
+        return true
     }
 }
 

@@ -1,19 +1,22 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.authenticateJWT = void 0;
-const auth_1 = require("./auth");
-const authenticateJWT = (req, res, next) => {
-    const token = req.session.jwt;
-    if (!token || !req.session.isAuthenticated) {
-        res.status(401).json({ message: 'Unauthorized' });
-        return;
-    }
-    const decoded = (0, auth_1.verifyToken)(token);
-    if (!decoded) {
-        res.status(403).json({ message: 'Invalid token' });
-        return;
-    }
-    //req.session.user = decoded as object;
-    next();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-exports.authenticateJWT = authenticateJWT;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateToken = generateToken;
+exports.verifyToken = verifyToken;
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const JWT_SECRET = process.env.JET_SECRET || "default_secret";
+function generateToken(user) {
+    return jsonwebtoken_1.default.sign(user, JWT_SECRET, { expiresIn: '1h' });
+}
+function verifyToken(token) {
+    try {
+        return jsonwebtoken_1.default.verify(token, JWT_SECRET);
+    }
+    catch (err) {
+        return null;
+    }
+}
